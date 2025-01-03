@@ -2,6 +2,10 @@ import { ActionFunction, json } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { account } from "~/services/appwrite";
 
+type ActionData = {
+    error?: string;
+}
+
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email") as string;
@@ -17,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Register() {
-  const actionData = useActionData();
+  const actionData = useActionData<ActionData>();
   return (
     <div>
       <h1>Register</h1>

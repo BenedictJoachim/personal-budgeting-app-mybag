@@ -3,6 +3,10 @@ import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { client, account  } from "~/services/appwrite";
 import { commitSession, getSession } from "~/services/session.server";
 
+type ActionData = {
+    error?: string;
+}
+
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
   if (session.has("user")) {
@@ -17,13 +21,14 @@ export const action: ActionFunction = async ({ request }) => {
   const password = formData.get("password") as string;
 
   try {
-    const session = await account.createEmailPasswordSession(email, password);
+    await account.createEmailPasswordSession(email, password);
     const user = await account.get();
-    const sessionStorage = await getSession(request.headers.get("Cookie"));
-    sessionStorage.set("user", { id: user.$id, email: user.email });
+    const session = await getSession();
+    session.set("user", { name: user.name, email: user.email });
+
     return redirect("/dashboard", {
       headers: {
-        "Set-Cookie": await commitSession(sessionStorage),
+        "Set-Cookie": await commitSession(session),
       },
     });
   } catch (err: any) {
@@ -32,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Login() {
-  const actionData = useActionData();
+  const actionData = useActionData<ActionData>();
   return (
     <div>
       <h1>Login</h1>

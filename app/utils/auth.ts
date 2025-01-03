@@ -1,12 +1,28 @@
-import { redirect } from "@remix-run/react";
+import { redirect } from "@remix-run/node";
+import { destroySession, getSession } from "~/services/session.server";
 import { account } from "~/services/appwrite";
-import { User } from "~/types/data-types";
 
-export async function requireUserSession(): Promise<User> {
-    try {
-        const user = await account.get();
-        return user as User;
-    } catch  {
-        throw redirect("/login")
+export async function requireUserSession(request: Request) {
+    const session = await getSession(request.headers.get("Cookie"));
+
+    // Check if user data exists in session
+    const user = session.get("user");
+    if (!user) {
+        throw redirect("/login");
     }
+
+    try {
+        // Verify session with Appwrite
+        await account.get();
+    } catch (error) {
+        // If Appwrite session is invalid, clear the session
+        console.error("Session verification failed:", error);
+        throw redirect("/login", {
+            headers: {
+                "Set-Cookie": await destroySession(session),
+            },
+        });
+    }
+
+    return user;
 }

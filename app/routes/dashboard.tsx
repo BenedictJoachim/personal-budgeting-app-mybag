@@ -1,10 +1,11 @@
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Suspense } from "react";
 import { User } from "~/types/data-types";
 import { requireUserSession } from "~/utils/auth";
 
-export async function loader() {
-    const user = await requireUserSession();
+export async function loader({ request }: LoaderFunctionArgs) {
+    const user = await requireUserSession(request);
     return user;
 }
 function Dashboard() {
