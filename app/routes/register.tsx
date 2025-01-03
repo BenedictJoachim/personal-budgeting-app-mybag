@@ -1,27 +1,33 @@
-import { Form, json } from "@remix-run/react";
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunction, json } from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
 import { account } from "~/services/appwrite";
 
-export async function action({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const name = formData.get("name") as string;
 
-    try {
-        const user = await account.create("unique()", email,password,name);
-    } catch (error: any) {
-        return json({ error: error.message });
-    }
-}
+  try {
+    await account.create("unique()", email, password, name);
+    return json({ success: true });
+  } catch (err: any) {
+    return json({ error: err.message }, { status: 400 });
+  }
+};
 
 export default function Register() {
-    return (
-        <Form method="post">
-            <input type="text" name="name" placeholder="Name" required />
-            <input type="email" name="email" placeholder="Email" required />
-            <input type="password" name="password" required />
-            <button type="submit">Sign Up</button>
-        </Form>
-    );
-};
+  const actionData = useActionData();
+  return (
+    <div>
+      <h1>Register</h1>
+      <Form method="post">
+        <input type="text" name="name" placeholder="Name" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Register</button>
+        {actionData?.error && <p>{actionData.error}</p>}
+      </Form>
+    </div>
+  );
+}
