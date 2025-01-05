@@ -1,58 +1,55 @@
-import { json, LoaderFunction, redirect } from "@remix-run/node";
+import { LoaderFunction, redirect, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { getSession } from "~/services/session.server";
-import { account } from "~/services/appwrite";
+import { getUserSession } from "~/services/session.server";
 
 type LoaderData = {
   user: {
     name: string;
     email: string;
-  } | null;
+  };
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-  const user = session.get("user");
+  // Retrieve user session
+  const session = await getUserSession(request);
 
-  // If no user is found in the session, redirect to login
-  if (!user) {
+  // Redirect to login if no session exists
+  if (!session) {
     return redirect("/login");
   }
 
-  try {
-    // Verify the user's session with Appwrite
-    const appwriteUser = await account.get();
+  // Extract user details from the session
+  const { name, email } = session;
 
-    // If valid, return the user's information
-    return json<LoaderData>({
-      user: {
-        name: appwriteUser.name,
-        email: appwriteUser.email,
-      },
-    });
-  } catch (error) {
-    // If Appwrite session is invalid, clear the session and redirect to login
+  // Validate required fields
+  if (!name || !email) {
+    console.error("Invalid session data. Redirecting to login.");
     return redirect("/login");
   }
+
+  // Return user data to the client
+  return json<LoaderData>({
+    user: { name, email },
+  });
 };
 
 export default function Index() {
   const { user } = useLoaderData<LoaderData>();
 
   return (
-    <div className="h-screen bg-gray-100 flex items-center justify-center">
-      <div className="p-8 bg-white shadow-lg rounded-lg text-center">
-        {user ? (
-          <>
-            <h1 className="text-2xl font-bold text-blue-600">
-              Welcome, {user.name}!
-            </h1>
-            <p className="text-gray-600 mt-2">Email: {user.email}</p>
-          </>
-        ) : (
-          <p className="text-red-600">No user data available.</p>
-        )}
+    <main className="h-screen flex flex-col items-center justify-center bg-gray-100">
+      <div className="p-6 bg-white rounded-lg shadow-md text-center">
+        <h1 className="text-3xl font-bold text-blue-600">Welcome, {user.name}!</h1>
+        <p className="text-gray-700 mt-2">Your email: {user.email}</p>
+        <div className="mt-6">
+          <a
+            href="/dashboard"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </a>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

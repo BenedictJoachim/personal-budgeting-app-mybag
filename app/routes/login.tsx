@@ -1,51 +1,69 @@
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import { client, account  } from "~/services/appwrite";
-import { commitSession, getSession } from "~/services/session.server";
+import { ActionFunction, json, redirect } from "@remix-run/node";
+import { Form, Link, useActionData } from "@remix-run/react";
+import { findUserByEmail } from "~/services/appwrite";
+import { verifyPassword } from "~/utils/hash";
+import { createUserSession } from "~/services/session.server";
 
 type ActionData = {
-    error?: string;
-}
-
-export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-  if (session.has("user")) {
-    return redirect("/dashboard");
-  }
-  return json({});
+  error?: string;
 };
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+  const email = formData.get("email");
+  const password = formData.get("password");
+
+  if (typeof email !== "string" || typeof password !== "string") {
+    return json<ActionData>({ error: "Invalid form data" });
+  }
 
   try {
-    await account.createEmailPasswordSession(email, password);
-    const user = await account.get();
-    const session = await getSession();
-    session.set("user", { name: user.name, email: user.email });
+    const user = await findUserByEmail(email);
 
-    return redirect("/dashboard", {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    });
-  } catch (err: any) {
-    return json({ error: err.message }, { status: 400 });
+    if (!user || !(await verifyPassword(password, user.password))) {
+      return json<ActionData>({ error: "Invalid email or password" });
+    }
+    console.log("USER FOUND", user);
+    
+    // Create a user session and redirect to the dashboard
+    return createUserSession(user.$id, user.name, user.email, user.role, "/dashboard");
+  } catch (error) {
+    console.error("Error during login:", error);
+    return json<ActionData>({ error: "Failed to log in user" });
   }
 };
 
 export default function Login() {
   const actionData = useActionData<ActionData>();
+
   return (
-    <div>
-      <h1>Login</h1>
-      <Form method="post">
-        <input type="email" name="email" placeholder="Email" required />
-        <input type="password" name="password" placeholder="Password" required />
-        <button type="submit">Login</button>
-        {actionData?.error && <p>{actionData.error}</p>}
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      <Form method="post" className="p-6 bg-white shadow-md rounded-md">
+        <h1 className="text-2xl font-bold mb-4">Login</h1>
+        {actionData?.error && (
+          <p className="text-red-500 mb-4">{actionData.error}</p>
+        )}
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          className="mb-2 p-2 border rounded w-full"
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          className="mb-4 p-2 border rounded w-full"
+          required
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white p-2 rounded w-full"
+        >
+          Login
+        </button>
+        <p>OR <Link to={"/register"}>Register</Link> </p>
       </Form>
     </div>
   );
