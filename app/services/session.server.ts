@@ -21,9 +21,10 @@ export const sessionStorage = createCookieSessionStorage({
 export async function createUserSession(
   userId: string,
   name: string,
-  role: string,
   email: string,
-  redirectTo: string
+  role: string,
+  redirectTo: string,
+
 ) {
   const session = await sessionStorage.getSession();
   session.set("userId", userId);
@@ -36,6 +37,7 @@ export async function createUserSession(
     userId: session.get("userId"),
     name: session.get("name"),
     email: session.get("email"),
+    role: session.get("role")
   });
 
   // Committing the session and redirecting the user
@@ -84,7 +86,7 @@ export async function getUserSession(request: Request): Promise<SessionData | nu
     const email = session.get("email");
     const role = session.get("role");
 
-    console.log("Retrieved session data:", { userId, name, email, role });
+    console.log("Retrieved session data:", { userId, name, role, email });
 
     if (typeof userId === "string" && typeof name === "string" && typeof email === "string" && typeof role === "string") {
       return { userId, name, email, role };

@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import LogoutButton from "~/components/LogoutButton";
 import { getUserSession } from "~/services/session.server";
 
@@ -30,12 +30,66 @@ export default function Dashboard() {
   const { name, email } = useLoaderData<LoaderData>();
 
   return (
-    <div className="h-screen bg-gray-100 flex items-center justify-center">
-      <div className="p-6 bg-white shadow-md rounded-md">
-        <h1 className="text-2xl font-bold">Welcome, {name}!</h1>
-        <p className="text-gray-600">Email: {email}</p>
-        <LogoutButton />
-      </div>
+    <div className="h-screen flex bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-blue-600 text-white flex flex-col">
+        <div className="p-6">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-sm">Welcome, {name}!</p>
+        </div>
+        <nav className="flex-grow">
+          <ul className="space-y-2 px-4">
+            <li>
+              <Link
+                to="/dashboard"
+                className="block px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/dashboard/income_setup"
+                className="block px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Income Setup
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/expenses"
+                className="block px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Track Expenses
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/goals"
+                className="block px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Savings Goals
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/tips"
+                className="block px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Personalized Tips
+              </Link>
+            </li>
+          </ul>
+        </nav>
+        <div className="p-4">
+          <LogoutButton />
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-grow p-6 bg-white shadow-md">
+        <Outlet />
+      </main>
     </div>
   );
 }

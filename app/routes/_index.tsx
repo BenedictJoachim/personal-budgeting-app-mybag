@@ -1,55 +1,30 @@
-import { LoaderFunction, redirect, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { getUserSession } from "~/services/session.server";
 
-type LoaderData = {
-  user: {
-    name: string;
-    email: string;
-  };
-};
 
-export const loader: LoaderFunction = async ({ request }) => {
-  // Retrieve user session
-  const session = await getUserSession(request);
-
-  // Redirect to login if no session exists
-  if (!session) {
-    return redirect("/login");
-  }
-
-  // Extract user details from the session
-  const { name, email } = session;
-
-  // Validate required fields
-  if (!name || !email) {
-    console.error("Invalid session data. Redirecting to login.");
-    return redirect("/login");
-  }
-
-  // Return user data to the client
-  return json<LoaderData>({
-    user: { name, email },
-  });
-};
+import { Link } from "@remix-run/react";
 
 export default function Index() {
-  const { user } = useLoaderData<LoaderData>();
-
   return (
-    <main className="h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="p-6 bg-white rounded-lg shadow-md text-center">
-        <h1 className="text-3xl font-bold text-blue-600">Welcome, {user.name}!</h1>
-        <p className="text-gray-700 mt-2">Your email: {user.email}</p>
-        <div className="mt-6">
-          <a
-            href="/dashboard"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
+    <div className="flex h-screen items-center justify-center bg-gray-100">
+      <div className="text-center bg-white p-8 shadow-lg rounded-lg max-w-md">
+        <h1 className="text-4xl font-bold text-blue-600 mb-4">Welcome to MyBag</h1>
+        <p className="text-gray-600 mb-6">
+          Organize your finances, set goals, and achieve your dreams. Get started by logging in or signing up today.
+        </p>
+        <div className="space-y-4">
+          <Link
+            to="/login"
+            className="block w-full bg-blue-500 text-white py-2 rounded-md text-lg font-semibold hover:bg-blue-600"
           >
-            Go to Dashboard
-          </a>
+            Login
+          </Link>
+          <Link
+            to="/register"
+            className="block w-full bg-gray-200 text-gray-800 py-2 rounded-md text-lg font-semibold hover:bg-gray-300"
+          >
+            Sign Up
+          </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

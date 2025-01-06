@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
     console.log("USER FOUND", user);
     
     // Create a user session and redirect to the dashboard
-    return createUserSession(user.$id, user.name, user.email, user.role, "/dashboard");
+    return createUserSession(user.$id, user.name, user.email, user.role, "/welcome");
   } catch (error) {
     console.error("Error during login:", error);
     return json<ActionData>({ error: "Failed to log in user" });

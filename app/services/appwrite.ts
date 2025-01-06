@@ -11,6 +11,7 @@ const databases = new Databases(client);
 
 const DATABASE_ID = "6772c4b500257fd9799b"; 
 const USER_COLLECTION_ID = "6772c4d2001868b477fb";
+const INCOME_COLLECTION_ID = "677c159d001cf9d30df4"
 
 
 export async function createUserEntry(
@@ -83,6 +84,50 @@ export async function deleteUser(userId: string) {
     throw new Error("Failed to delete user");
   }
 }
+
+// Fetch user's income data
+export const getIncomeData = async (userId: string) => {
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, INCOME_COLLECTION_ID, [
+        Query.equal("userId", userId),
+      ]);
+      return response.documents[0] || null;
+    } catch (error) {
+      console.error("Error fetching income data:", error);
+      throw new Error("Failed to fetch income data");
+    }
+  };
+  
+  // Save or update income data
+  export const saveIncomeData = async (
+    userId: string,
+    monthlyIncome: number,
+    additionalIncome: number
+  ) => {
+    try {
+      const existingData = await getIncomeData(userId);
+  
+      if (existingData) {
+        // Update existing document
+        await databases.updateDocument(
+          DATABASE_ID,
+          INCOME_COLLECTION_ID,
+          existingData.$id,
+          { monthlyIncome, additionalIncome }
+        );
+      } else {
+        // Create new document
+        await databases.createDocument(DATABASE_ID, INCOME_COLLECTION_ID, "unique()", {
+          userId,
+          monthlyIncome,
+          additionalIncome,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving income data:", error);
+      throw new Error("Failed to save income data");
+    }
+  };
 
 export { client, account, databases};
 
