@@ -88,9 +88,17 @@ export async function deleteUser(userId: string) {
 // Fetch user's income data
 export const getIncomeData = async (userId: string) => {
     try {
+      console.log("Fetching income data for user: ", userId);
+      
       const response = await databases.listDocuments(DATABASE_ID, INCOME_COLLECTION_ID, [
         Query.equal("userId", userId),
       ]);
+
+      if (response.documents.length === 0) {
+        console.log("No income data found for user:", userId);
+        return null; 
+      }
+      
       return response.documents[0] || null;
     } catch (error) {
       console.error("Error fetching income data:", error);
@@ -113,7 +121,7 @@ export const getIncomeData = async (userId: string) => {
           DATABASE_ID,
           INCOME_COLLECTION_ID,
           existingData.$id,
-          { monthlyIncome, additionalIncome }
+          { monthlyIncome, additionalIncome, userId }
         );
       } else {
         // Create new document
@@ -131,10 +139,3 @@ export const getIncomeData = async (userId: string) => {
 
 export { client, account, databases};
 
-// export const setAuthCookies = (request: Request) => {
-//     const cookies = request.headers.get("Cookie");
-
-//     if (cookies) {
-//         client.headers["X-Fallback-Cookies"] = cookies;
-//     }
-// }

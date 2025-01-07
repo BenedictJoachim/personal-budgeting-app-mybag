@@ -13,7 +13,8 @@ export const loader = async ({ request }: { request: Request }) => {
     if (!session || !session.userId) {
       return redirect("/login");
     }
-  
+    console.log("INCOME USER: ", session.userId);
+    
     try {
       const incomeData = await getIncomeData(session.userId);
       return json<LoaderData>({
@@ -42,7 +43,7 @@ export const action = async ({ request }: { request: Request }) => {
   
     try {
       await saveIncomeData(session.userId, monthlyIncome, additionalIncome);
-      return redirect("/dashboard/income_setup");
+      return redirect("/income_setup");
     } catch (error) {
       if (error instanceof Error) {
         console.error("Error saving income data:", error.message);
@@ -59,6 +60,29 @@ export default function IncomeSetup() {
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
       <h1 className="text-2xl font-bold mb-4">Income Setup</h1>
+      <div className="mb-4">
+        {monthlyIncome && additionalIncome ? (
+          <div className="flex flex-col space-y-2">
+            <div className="bg-green-100 p-4 rounded-md">
+              <p className="text-green-700">
+                Monthly Income: Tsh{monthlyIncome.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-green-100 p-4 rounded-md">
+              <p className="text-green-700">
+                Additional Income: Tsh{additionalIncome.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-yellow-100 p-4 rounded-md">
+            <p className="text-yellow-700">
+              Please enter your monthly and additional income to view your
+              income summary.
+            </p>
+          </div>
+        )}
+      </div>
       <Form method="post" className="space-y-4">
         <div>
           <label htmlFor="monthlyIncome" className="block text-sm font-medium text-gray-700">

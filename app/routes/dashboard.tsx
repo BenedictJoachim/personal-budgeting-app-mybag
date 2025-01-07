@@ -49,7 +49,7 @@ export default function Dashboard() {
             </li>
             <li>
               <Link
-                to="/dashboard/income_setup"
+                to="/income_setup"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Income Setup
