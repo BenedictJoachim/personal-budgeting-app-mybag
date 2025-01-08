@@ -1,4 +1,5 @@
 import { Client, Account, Databases, Query } from "appwrite";
+import { Category } from "~/types/data-types";
 
 const client = new Client();
 
@@ -11,7 +12,8 @@ const databases = new Databases(client);
 
 const DATABASE_ID = "6772c4b500257fd9799b"; 
 const USER_COLLECTION_ID = "6772c4d2001868b477fb";
-const INCOME_COLLECTION_ID = "677c159d001cf9d30df4"
+const INCOME_COLLECTION_ID = "677c159d001cf9d30df4";
+const CATEGORIES_COLLECTION_ID ="677d05b300051e724284";
 
 
 export async function createUserEntry(
@@ -137,5 +139,34 @@ export const getIncomeData = async (userId: string) => {
     }
   };
 
+
+  export async function getCategories() {
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, CATEGORIES_COLLECTION_ID);
+      return response.documents.length > 0 ? response.documents : [];
+    } catch (error) {
+      console.error('Error fetching category data:', error);
+      return [];
+    }
+  }
+  
+  export async function saveCategories(categories: Category[]) {
+    try {
+      const promises = categories.map(category => {
+        if (category.id) {
+          return databases.updateDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, category.id, category);
+        } else {
+          return databases.createDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, "unique()", category);
+        }
+      });
+  
+      await Promise.all(promises);
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving category data:', error);
+      return { success: false };
+    }
+  }
+  
 export { client, account, databases};
 

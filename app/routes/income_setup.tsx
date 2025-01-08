@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, Link, useLoaderData } from "@remix-run/react";
 import { getUserSession } from "~/services/session.server";
 import { getIncomeData, saveIncomeData } from "~/services/appwrite";
 
@@ -119,6 +119,7 @@ export default function IncomeSetup() {
           Save Income
         </button>
       </Form>
+      <Link to={"/categories_setup"}>Categories Setup</Link>
     </div>
   );
 }
