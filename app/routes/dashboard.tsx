@@ -41,7 +41,7 @@ export default function Dashboard() {
           <ul className="space-y-2 px-4">
             <li>
               <Link
-                to="/dashboard"
+                to="/summaryDashboard"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Home
