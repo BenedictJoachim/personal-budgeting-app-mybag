@@ -1,5 +1,5 @@
 import React, { useState, useTransition } from 'react';
-import { useLoaderData, Form, useNavigation } from '@remix-run/react';
+import { useLoaderData, Form, useNavigation, Link } from '@remix-run/react';
 import { getCategories, getIncomeData, saveCategories } from '../services/appwrite'; // Import Appwrite functions
 import { ActionFunction, json, LoaderFunction, redirect } from '@remix-run/node';
 import { Category } from '~/types/data-types';
@@ -26,45 +26,50 @@ interface LoaderData {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const session = await getUserSession(request);
-  console.log("CATEGORY USER", session?.name);
   
   if (!session || !session.userId) {
     return redirect("/login");
   }
 
   try {
-    const [incomeData, categories] = await Promise.all([
-      getIncomeData(session.userId),
-      getCategories(),
-    ]);
-
-    const formattedCategories = categories.map((category: any) => ({
-      id: category.$id,
-      name: category.name,
-      userPercentage: category.userPercentage || '',
-      userId: session.userId,
+    const userCategories = await getIncomeData(session.userId);
+    
+    // Return user-specific categories or defaults if none are found
+    const categories = userCategories?.length > 0 ? userCategories : defaultCategories.map(category => ({
+      ...category,
+      userPercentage: '',
     }));
 
-    return json<LoaderData>({
-      monthlyIncome: incomeData?.monthlyIncome || null,
-      additionalIncome: incomeData?.additionalIncome || null,
-      categories: formattedCategories.length > 0 ? formattedCategories : [],
-    });
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    return json<LoaderData>({
-      monthlyIncome: null,
-      additionalIncome: null,
-      categories: [],
-    });
+    return json({ categories });
+  } catch (error: any) {
+    console.error("Error fetching categories:", error);
+    return json(
+      { message: "Failed to load categories", error: error.message },
+      { status: 500 }
+    );
   }
 };
 
 export const action:ActionFunction = async({ request }) => {
   const formData = await request.formData();
   const categories = JSON.parse(formData.get('categories') as string);
-  return await saveCategories(categories); // Use Appwrite utility function
-}
+  const session = await getUserSession(request);
+
+  if (!session || !session.userId) {
+    return json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    // Pass userId along with categories to saveCategories
+    await saveCategories(session.userId, categories);
+    return json({ message: "Categories saved successfully" });
+  } catch (error: any) {
+    console.error("Error saving categories:", error);
+    return json(
+      { message: "Failed to save categories", error: error.message },
+      { status: 500 }
+    );
+  }}
 
 const CategorySetup = () => {
   const data = useLoaderData<LoaderData>();
@@ -146,6 +151,7 @@ const CategorySetup = () => {
           {navigation.state === 'submitting' ? 'Saving...' : 'Save'}
         </button>
       </Form>
+      <Link to={'/expense_setup'}>Expenses</Link>
     </div>
   );
 };

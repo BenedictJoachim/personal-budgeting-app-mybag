@@ -1,5 +1,5 @@
 import { Client, Account, Databases, Query } from "appwrite";
-import { Category } from "~/types/data-types";
+import { Category, Expense } from "~/types/data-types";
 
 const client = new Client();
 
@@ -14,6 +14,7 @@ const DATABASE_ID = "6772c4b500257fd9799b";
 const USER_COLLECTION_ID = "6772c4d2001868b477fb";
 const INCOME_COLLECTION_ID = "677c159d001cf9d30df4";
 const CATEGORIES_COLLECTION_ID ="677d05b300051e724284";
+const EXPENSES_COLLECTION_ID = "6772c6680009a586b8bf";
 
 
 export async function createUserEntry(
@@ -150,23 +151,113 @@ export const getIncomeData = async (userId: string) => {
     }
   }
   
-  export async function saveCategories(categories: Category[]) {
+  export async function saveCategories(userId: string, categories: Category[]) {
+    console.log("Saving categories with user ID", userId);
+    console.log("Categories", categories);
+    
+    
     try {
       const promises = categories.map(category => {
+        const categoryData = {
+          ...category,
+          userId, // Include the userId in each category
+        };
+  
         if (category.id) {
-          return databases.updateDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, category.id, category);
+          console.log('Updating category', categoryData);
+          
+          return databases.updateDocument(
+            DATABASE_ID,
+            CATEGORIES_COLLECTION_ID,
+            category.id,
+            categoryData
+          );
         } else {
-          return databases.createDocument(DATABASE_ID, CATEGORIES_COLLECTION_ID, "unique()", category);
+          console.log("Creating new category:", categoryData);
+          return databases.createDocument(
+            DATABASE_ID,
+            CATEGORIES_COLLECTION_ID,
+            'unique()', // Generate a unique document ID
+            categoryData
+          );
         }
       });
   
-      await Promise.all(promises);
+      await Promise.all(promises); // Execute all save/update operations concurrently
       return { success: true };
     } catch (error) {
       console.error('Error saving category data:', error);
-      return { success: false };
+      throw new Error('Failed to save categories');
     }
   }
   
+  // Function to fetch expenses from Appwrite
+  export async function fetchExpenses(userId: string): Promise<Expense[]> {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        EXPENSES_COLLECTION_ID,
+        [Query.equal('userId', userId)] // Filter by userId
+      );
+      return response.documents.map((doc) => ({
+        id: doc.$id,
+        category: doc.category,
+        description: doc.description,
+        amount: doc.amount,
+      })) as Expense[];
+    } catch (error) {
+      console.error('Error fetching expense data:', error);
+      return [];
+    }
+  }
+
+// Function to save expenses to Appwrite (create or update)
+export async function saveExpenses(expenses: Expense[]): Promise<{ success: boolean }> {
+  try {
+    const promises = expenses.map((expense) => {
+      const formattedDate = new Date(expense.date).toISOString(); // Ensure date is in ISO string format
+
+      if (expense.id) {
+        // Update existing expense
+        return databases.updateDocument(
+          DATABASE_ID,
+          EXPENSES_COLLECTION_ID,
+          expense.id, // Use the existing expense ID
+          {
+            category: expense.category,
+            description: expense.description,
+            amount: expense.amount,
+            date: formattedDate,
+            userId: expense.userId,
+          }
+        );
+      } else {
+        // Create a new expense
+        console.log("Creating a new Expense:", expense.description);
+
+        return databases.createDocument(
+          DATABASE_ID,
+          EXPENSES_COLLECTION_ID,
+          "unique()",
+          {
+            category: expense.category,
+            description: expense.description,
+            amount: expense.amount,
+            date: formattedDate,
+            userId: expense.userId,
+          }
+        );
+      }
+    });
+
+    await Promise.all(promises);
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving expense data:", error);
+    return { success: false };
+  }
+}
+
+
 export { client, account, databases};
 
