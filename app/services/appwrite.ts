@@ -1,5 +1,6 @@
 import { Client, Account, Databases, Query } from "appwrite";
 import { Category, Expense } from "~/types/data-types";
+import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
 
 const client = new Client();
@@ -78,7 +79,7 @@ async function sendRecoveryEmail(email: string, recoveryUrl: string) {
     from: "benedictorngwandu@gmail.com", 
     subject: "Password Recovery", 
     text: `You requested to reset your password. Click the link to reset your password: ${recoveryUrl}`, 
-    html: `<strong>You requested to reset your password. Click the link to reset your password: <a href="${recoveryUrl}">${recoveryUrl}</a></strong>`, 
+    html: `<strong>You requested to reset your password. Click the link to reset your password:</strong> <a href="${recoveryUrl}">${recoveryUrl}</a>`, 
   }; 
 
   try { 
@@ -104,6 +105,11 @@ export async function updateUser(userId: string, updates: Record<string, any>) {
   try {
     console.log("Updating user with ID:", userId);
     console.log("Update data:", updates);
+    // If the update includes a new password, hash it before storing 
+    if (updates.password) { 
+      const saltRounds = 10; 
+      updates.password = await bcrypt.hash(updates.password, saltRounds); 
+    }
     
     const updatedUser = await databases.updateDocument(
       DATABASE_ID,
