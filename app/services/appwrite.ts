@@ -1,7 +1,10 @@
 import { Client, Account, Databases, Query } from "appwrite";
 import { Category, Expense } from "~/types/data-types";
+import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
+
+dotenv.config();
 
 const client = new Client();
 
@@ -18,8 +21,7 @@ const INCOME_COLLECTION_ID = "677c159d001cf9d30df4";
 const CATEGORIES_COLLECTION_ID ="677d05b300051e724284";
 const EXPENSES_COLLECTION_ID = "6772c6680009a586b8bf";
 
-const SENDGRID_API_KEY = "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"
-sgMail.setApiKey(SENDGRID_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 // CREATING A USER ENTRY
 export async function createUserEntry(
