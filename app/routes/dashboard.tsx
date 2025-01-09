@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
+import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import LogoutButton from "~/components/LogoutButton";
 import { getUserSession } from "~/services/session.server";
 
@@ -40,44 +40,44 @@ export default function Dashboard() {
         <nav className="flex-grow">
           <ul className="space-y-2 px-4">
             <li>
-              <Link
+              <NavLink
                 to="/summaryDashboard"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Home
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link
+              <NavLink
                 to="/income_setup"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Income Setup
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link
+              <NavLink
                 to="/expenses"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Track Expenses
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link
+              <NavLink
                 to="/goals"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Savings Goals
-              </Link>
+              </NavLink>
             </li>
             <li>
-              <Link
+              <NavLink
                 to="/tips"
                 className="block px-4 py-2 rounded hover:bg-blue-700"
               >
                 Personalized Tips
-              </Link>
+              </NavLink>
             </li>
           </ul>
         </nav>

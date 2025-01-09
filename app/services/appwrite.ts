@@ -49,6 +49,24 @@ export async function findUserByEmail(email: string) {
   }
 }
 
+export async function createPasswordRecoveryToken(email: string) { 
+  const user = await findUserByEmail(email); 
+  if (!user) { 
+    throw new Error("User not found");
+   } 
+   const token = generateToken(); 
+   const updatedUser = await updateUser(user.$id, { recoveryToken: token });
+
+   // Send the token via email to the user (implement email logic here)
+     return updatedUser;
+  } 
+
+  // Helper function to generate a token (simple implementation)
+function generateToken() { 
+    return Math.random().toString(36).substr(2);
+   } 
+   
+
 export async function getUserById(userId: string) {
   try {
     const user = await databases.getDocument(DATABASE_ID, USER_COLLECTION_ID, userId);
