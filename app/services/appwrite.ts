@@ -1,5 +1,6 @@
 import { Client, Account, Databases, Query } from "appwrite";
 import { Category, Expense } from "~/types/data-types";
+import sgMail from "@sendgrid/mail";
 
 const client = new Client();
 
@@ -16,7 +17,10 @@ const INCOME_COLLECTION_ID = "677c159d001cf9d30df4";
 const CATEGORIES_COLLECTION_ID ="677d05b300051e724284";
 const EXPENSES_COLLECTION_ID = "6772c6680009a586b8bf";
 
+const SENDGRID_API_KEY = "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"
+sgMail.setApiKey(SENDGRID_API_KEY);
 
+// CREATING A USER ENTRY
 export async function createUserEntry(
   name: string,
   email: string,
@@ -36,6 +40,7 @@ export async function createUserEntry(
   }
 }
 
+// FINDING USER BY EMAIL
 export async function findUserByEmail(email: string) {
   try {
     const result = await databases.listDocuments(DATABASE_ID, USER_COLLECTION_ID, [
@@ -49,23 +54,41 @@ export async function findUserByEmail(email: string) {
   }
 }
 
+// CREATING PASSWORD RECOVERY TOKEN
 export async function createPasswordRecoveryToken(email: string) { 
   const user = await findUserByEmail(email); 
   if (!user) { 
     throw new Error("User not found");
    } 
    const token = generateToken(); 
-   const updatedUser = await updateUser(user.$id, { recoveryToken: token });
+   await updateUser(user.$id, { recoveryToken: token });
+   const recoveryUrl = `https://upgraded-system-7vv95967wpw9fwrw9-5173.app.github.dev/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
-   // Send the token via email to the user (implement email logic here)
-     return updatedUser;
+   await sendRecoveryEmail(email, recoveryUrl)
   } 
 
-  // Helper function to generate a token (simple implementation)
+// Helper function to generate a token (simple implementation)
 function generateToken() { 
     return Math.random().toString(36).substr(2);
    } 
-   
+
+async function sendRecoveryEmail(email: string, recoveryUrl: string) { 
+  const msg = { 
+    to: email, 
+    from: "benedictorngwandu@gmail.com", 
+    subject: "Password Recovery", 
+    text: `You requested to reset your password. Click the link to reset your password: ${recoveryUrl}`, 
+    html: `<strong>You requested to reset your password. Click the link to reset your password: <a href="${recoveryUrl}">${recoveryUrl}</a></strong>`, 
+  }; 
+
+  try { 
+    await sgMail.send(msg); 
+    console.log(`Recovery email sent to ${email}`); 
+  } catch (error) { 
+    console.error("Error sending recovery email:", error); 
+    throw new Error("Failed to send recovery email"); 
+  } 
+}
 
 export async function getUserById(userId: string) {
   try {
@@ -79,6 +102,9 @@ export async function getUserById(userId: string) {
 
 export async function updateUser(userId: string, updates: Record<string, any>) {
   try {
+    console.log("Updating user with ID:", userId);
+    console.log("Update data:", updates);
+    
     const updatedUser = await databases.updateDocument(
       DATABASE_ID,
       USER_COLLECTION_ID,

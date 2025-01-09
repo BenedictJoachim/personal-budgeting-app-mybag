@@ -63,7 +63,10 @@ export default function Login() {
         >
           Login
         </button>
-        <p>OR <Link to={"/register"}>Register</Link> </p>
+        <p>
+          <Link to={"/register"}>Register</Link>
+          <Link to={"/forgot-password"}>Forgot Password?</Link>
+        </p>
       </Form>
     </div>
   );

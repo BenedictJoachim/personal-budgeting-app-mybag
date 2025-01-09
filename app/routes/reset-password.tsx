@@ -1,35 +1,32 @@
-// app/routes/reset-password.tsx
 import { json, LoaderFunction, ActionFunction, redirect } from '@remix-run/node';
 import { useLoaderData, useSearchParams } from '@remix-run/react';
 import { findUserByEmail, updateUser } from '~/services/appwrite';
 import { useEffect, useState } from 'react';
 
-// Define the type for the loader data
 type LoaderData = {
   token: string;
 };
 
-// Define the type for the action response
 type ActionData = {
   success?: string;
   error?: string;
 };
 
-export let loader: LoaderFunction = async ({ request }) => {
-  let url = new URL(request.url);
-  let token = url.searchParams.get('token');
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token');
   if (!token) {
-    return redirect('/'); // Redirect to homepage or error page if token is missing
+    return redirect('/login'); 
   }
   return json<LoaderData>({ token });
 };
 
-export let action: ActionFunction = async ({ request }) => {
-  let formData = await request.formData();
-  let email = formData.get('email') as string;
-  let newPassword = formData.get('newPassword') as string;
-  let confirmPassword = formData.get('confirmPassword') as string;
-  let token = formData.get('token') as string;
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+  const email = formData.get('email') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+  const token = formData.get('token') as string;
 
   if (!email || !newPassword || !confirmPassword || !token) {
     return json<ActionData>({ error: 'All fields are required' }, { status: 400 });
@@ -46,14 +43,14 @@ export let action: ActionFunction = async ({ request }) => {
     }
 
     await updateUser(user.$id, { password: newPassword, recoveryToken: null });
-    return json<ActionData>({ success: 'Password reset successfully' });
+    return redirect("/login");
   } catch (error: any) {
     return json<ActionData>({ error: 'Error resetting password: ' + error.message }, { status: 500 });
   }
 };
 
 export default function ResetPassword() {
-  let { token } = useLoaderData<LoaderData>();
+  const { token } = useLoaderData<LoaderData>();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || '';
   const [newPassword, setNewPassword] = useState('');
